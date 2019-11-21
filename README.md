@@ -29,22 +29,25 @@ Usage of ./gohide:
     	forward to remote fake server -r x.x.x.x:xxxx (ip/domain:port) (default "127.0.0.1:9999")
 ```
 
-**Scenario**
+**Scenario** 
 
-Box A - Reverse Handler.
+Box A - Reverse Handler. 
 
 ```
-root@WOPR-KALI:/opt/gohide# ./gohide -f 0.0.0.0:8081 -l 127.0.0.1:8080 -r 127.0.0.1:9091 -m websocket-client
+root@WOPR-KALI:/opt/gohide# ./gohide -f 0.0.0.0:8081 -l 127.0.0.1:8080 -r target.com:9091 -m websocket-client
 Local Port Forward Listening: 127.0.0.1:8080
 FakeSrv Listening: 0.0.0.0:8081
 ```
 Box B - Target.
 ```
-root@WOPR-KALI:/opt/gohide# ./gohide -f 0.0.0.0:9091 -r 127.0.0.1:8081 -l 127.0.0.1:9090 -m websocket-server
+root@WOPR-KALI:/opt/gohide# ./gohide -f 0.0.0.0:9091 -l 127.0.0.1:9090 -r target.com:8081 -m websocket-server
 Local Port Forward Listening: 127.0.0.1:9090
 FakeSrv Listening: 0.0.0.0:9091
 
 ```
+Note:
+/etc/hosts "127.0.0.1 target.com"
+
 Box B - Netcat /bin/bash
 
 ```
@@ -133,5 +136,7 @@ none
 Future
 - Fix up error handling.
 - Add flag/logic to disable tls.
+
+
 
 Enjoy~
