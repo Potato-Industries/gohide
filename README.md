@@ -123,6 +123,7 @@ none
 8JWxXufVora2FNa/8m2Vnub6oiA2raV4Q5tUELJA
 ```
 Future
+- Add response messages on same channel.
 - Fix up error handling.
 - Add TLS.
 
