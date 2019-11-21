@@ -1,6 +1,6 @@
 # gohide 
 
-Tunnel TCP port to port traffic via an obfuscated channel with AES-GCM encryption. 
+Tunnel port to port traffic via an obfuscated channel with AES-GCM encryption. 
 
 **Obfuscation Modes**
 - Session Cookie HTTP GET (http-client)
@@ -130,5 +130,6 @@ none
 
 Future
 - Fix up error handling.
+- Add flag/logic to disable tls.
 
 Enjoy~
