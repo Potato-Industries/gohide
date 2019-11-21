@@ -7,6 +7,7 @@ import (
     "bufio"
     "flag"
     "time"
+    "regexp"
     "crypto/aes"
     "crypto/cipher"
     "crypto/rand"
@@ -36,12 +37,6 @@ func Encrypt(data []byte) []byte {
         output := make([]byte, gcm.NonceSize() + len(ciphertext))
         copy(output[:len(nonce)], nonce)
         copy(output[len(nonce):], ciphertext)
-
-        //fmt.Printf("APPEND: %x\n", output)
-        //fmt.Printf("NONCE: %x\n", nonce)
-        //fmt.Printf("CIPHER: %x\n", ciphertext)
-        //fmt.Printf("BOTH  : %x%x\n", nonce, ciphertext)
-
         return output
 }
 
@@ -96,8 +91,37 @@ func obscure_recv(data []byte, stype string) []byte {
     switch stype {
         default:
             decode , _ := b64.StdEncoding.DecodeString(string(data))
-            fmt.Printf("DECODE: %x\n", decode)
             return Decrypt([]byte(decode))
+
+        case "websocket-server":
+            pattern := `(?m)Session=([^;]+);`
+            found, _ := regexp.Match(pattern, data)
+            fmt.Println(found == true)
+            if found == true {
+                re := regexp.MustCompile(pattern)
+                match := re.FindStringSubmatch(string(data))
+                decode , err := b64.StdEncoding.DecodeString(match[1])
+                if err != nil {
+                    return nil
+                }
+                return Decrypt([]byte(decode))
+            }
+            return nil
+
+        case "websocket-client":
+            pattern := `(?m)Sec-WebSocket-Accept: ([^;]+)`
+            found, _ := regexp.Match(pattern, data)
+            if found == true {
+                re := regexp.MustCompile(pattern)
+                match := re.FindStringSubmatch(string(data))
+                decode , err := b64.StdEncoding.DecodeString(match[1])
+                if err != nil {
+                    return nil
+                }
+                return Decrypt([]byte(decode))
+            }
+            return nil
+
     }
 }
 
@@ -198,9 +222,9 @@ func main() {
         for {
             scanner := bufio.NewScanner(or)
 	    for scanner.Scan() {
-		fmt.Fprintf(rw, obscure_send([]byte(scanner.Text()), *modePtr))
+                fmt.Fprintf(rw, obscure_send([]byte(scanner.Text()), *modePtr))
                 fmt.Printf("OUT READ: %s\n", scanner.Text())
-                fmt.Printf("OUT READ: %x\n", scanner.Text()) 
+                fmt.Printf("OUT READ: %x\n", scanner.Text())
 	    }
 
             time.Sleep(400 * time.Millisecond)
@@ -214,12 +238,15 @@ func main() {
 
             scanner := bufio.NewScanner(ir)
             for scanner.Scan() {
-                fmt.Fprintf(lw, string(obscure_recv([]byte(scanner.Text()), *modePtr)) + "\n")
-                fmt.Printf("IN READ: %s\n", scanner.Text())
-                fmt.Printf("IN READ: %x\n", scanner.Text())
+                output := obscure_recv([]byte(scanner.Text()), *modePtr)
+                if output != nil {
+                    fmt.Fprintf(lw, string(output) + "\n")
+                    fmt.Printf("IN READ: %s\n", scanner.Text())
+                    fmt.Printf("IN READ: %x\n", scanner.Text())
 
-                fmt.Printf("DECRYPTED BYTES: %x\n", string(obscure_recv([]byte(scanner.Text()), *modePtr)))
-                fmt.Printf("DECRYPTED STRNG: %s\n", string(obscure_recv([]byte(scanner.Text()), *modePtr)))
+                    fmt.Printf("DECRYPTED BYTES: %x\n", string(obscure_recv([]byte(scanner.Text()), *modePtr)))
+                    fmt.Printf("DECRYPTED STRNG: %s\n", string(obscure_recv([]byte(scanner.Text()), *modePtr)))
+                }
 
             }
 
@@ -233,3 +260,4 @@ func main() {
     }
 
 }
+
