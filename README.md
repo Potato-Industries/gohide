@@ -9,7 +9,7 @@ Tunnel TCP port to port traffic via an obfuscated channel with AES-GCM encryptio
 - WebSocket Handshake "Sec-WebSocket-Accept" (websocket-server)
 - No obfuscation, just use AES-GCM encrypted messages (none)
 
-AES-GCM is enabled by default for each of the options above. 
+AES-GCM is enabled by default for each of the options above.
 
 **Usage**
 ```
@@ -61,9 +61,9 @@ netstat -pantwu
 Active Internet connections (servers and established)
 tcp        0      0 127.0.0.1:39684         127.0.0.1:8081          ESTABLISHED 14334/./gohide      
 
-**Obfuscation sample**
-
 ```
+**Obfuscation Samples**
+
 websocket-client (Box A to Box B)
 - Sec-WebSocket-Key contains AES-GCM encrypted content e.g. "uname -a".
 ```
@@ -84,7 +84,43 @@ Upgrade: websocket
 Connection: Upgrade
 Sec-WebSocket-Accept: URrP5l0Z3NIHXi+isjuIyTSKfoP60Vw5d2gqcmI=
 ```
+http-client
+- Session cookie header contains AES-GCM encrypted content
+```
+GET /news/api/latest HTTP/1.1
+Host: cdn-tbn0.gstatic.com
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Trident/7.0; rv:11.0) like Gecko
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: http://www.bbc.co.uk/
+Connection: keep-alive
+Cookie: Session=R7IJ8y/EBgCanTo6fc0fxhNVDA27PFXYberJNW29; Secure; HttpOnly
+```
+http-server
+- Set-Cookie header contains AES-GCM encrypted content.
+```
+HTTP/2.0 200 OK
+content-encoding: gzip
+content-type: text/html; charset=utf-8
+pragma: no-cache
+server: nginx
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+x-xss-protection: 1; mode=block
+cache-control: no-cache, no-store, must-revalidate
+expires: Thu, 21 Nov 2019 01:07:15 GMT
+date: Thu, 21 Nov 2019 01:07:15 GMT
+content-length: 30330
+vary: Accept-Encoding
+X-Firefox-Spdy: h2
+Set-Cookie: Session=gWMnQhh+1vkllaOxueOXx9/rLkpf3cmh5uUCmHhy; Secure; Path=/; HttpOnly
 
+```
 
+none
+```
+8JWxXufVora2FNa/8m2Vnub6oiA2raV4Q5tUELJA
+```
 
 Enjoy~
