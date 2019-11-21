@@ -130,6 +130,5 @@ none
 
 Future
 - Fix up error handling.
-- Add TLS.
 
 Enjoy~
