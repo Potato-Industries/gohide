@@ -38,7 +38,7 @@ FakeSrv Listening: 0.0.0.0:8081
 ```
 Box B - Target.
 ```
-root@WOPR-KALI:/opt/gohide -f 0.0.0.0:9091 -r 127.0.0.1:8081 -l 127.0.0.1:9090 -m websocket-server
+root@WOPR-KALI:/opt/gohide# ./gohide -f 0.0.0.0:9091 -r 127.0.0.1:8081 -l 127.0.0.1:9090 -m websocket-server
 Local Port Forward Listening: 127.0.0.1:9090
 FakeSrv Listening: 0.0.0.0:9091
 
