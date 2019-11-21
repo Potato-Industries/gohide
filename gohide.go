@@ -4,6 +4,7 @@ import (
     "io"
     "net"
     "fmt"
+    "io/ioutil"
     "bufio"
     "flag"
     "time"
@@ -12,6 +13,8 @@ import (
     "crypto/aes"
     "crypto/cipher"
     "crypto/rand"
+    "crypto/tls"
+    "crypto/x509"
     b64 "encoding/base64"
 )
 
@@ -201,13 +204,76 @@ func sham(stype string) []byte {
     }
 }
 
+func setupTLS(pemPtr string) *tls.Config {
+     //default do not use! set your own .pem using -pem!
+     certPem := []byte(`-----BEGIN CERTIFICATE-----
+MIICRzCCAcygAwIBAgIUCU0DaqqroWAAL8wvvOJgvuSCAlgwCgYIKoZIzj0EAwIw
+WjELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGElu
+dGVybmV0IFdpZGdpdHMgUHR5IEx0ZDETMBEGA1UEAwwKdGFyZ2V0LmNvbTAeFw0x
+OTExMjEyMjU5MjlaFw0yOTExMTgyMjU5MjlaMFoxCzAJBgNVBAYTAkFVMRMwEQYD
+VQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBM
+dGQxEzARBgNVBAMMCnRhcmdldC5jb20wdjAQBgcqhkjOPQIBBgUrgQQAIgNiAATR
+ZYVwyZIVj8EiPzsTR7OBS1uycga15tIK9eEvGv7xPrv2EmCc6XYecI1lSVHkEqMN
+gVazeiDy5Wm90roP1r2IxB/hclp1WgpDXXJZql8VaFUR2/jAbvjPUgbwdbBQxfOj
+UzBRMB0GA1UdDgQWBBTnQhFiG9cWSCZwl1sxfd3PMA3p5TAfBgNVHSMEGDAWgBTn
+QhFiG9cWSCZwl1sxfd3PMA3p5TAPBgNVHRMBAf8EBTADAQH/MAoGCCqGSM49BAMC
+A2kAMGYCMQD0fK2o96rREKiJCojOg73LSiX3FGMtLqCEHfBq9wyrerxWugwDp2Fg
+P9h8NsbF81cCMQDPww/4ige6PoCtvcbYmj9UqynznYo7B788LBGzufA7KNFAfcTP
+JTrHESOoiQ5j9N0=
+-----END CERTIFICATE-----`)
+
+     keyPem := []byte(`-----BEGIN EC PARAMETERS-----
+BgUrgQQAIg==
+-----END EC PARAMETERS-----
+-----BEGIN EC PRIVATE KEY-----
+MIGkAgEBBDCWraBt3j/eJyRDPrf/2XrwON5jUDJyVlOGbWm+5pDBUyQtTNXakSyV
+mafgjsOkQ3egBwYFK4EEACKhZANiAATRZYVwyZIVj8EiPzsTR7OBS1uycga15tIK
+9eEvGv7xPrv2EmCc6XYecI1lSVHkEqMNgVazeiDy5Wm90roP1r2IxB/hclp1WgpD
+XXJZql8VaFUR2/jAbvjPUgbwdbBQxfM=
+-----END EC PRIVATE KEY-----`)
+
+    if pemPtr != "default" {
+         certPem , _ = ioutil.ReadFile(pemPtr)
+         keyPem , _ = ioutil.ReadFile(pemPtr)
+     }
+
+     cert, err := tls.X509KeyPair(certPem, keyPem)
+     if err != nil {
+         panic(err)
+     }
+
+     roots := x509.NewCertPool()
+     ok := roots.AppendCertsFromPEM(certPem)
+     if !ok {
+         panic("root ca error")
+     }
+
+     tlscfg := &tls.Config{
+         RootCAs: roots,
+         Certificates: []tls.Certificate{cert},
+         //InsecureSkipVerify: true,
+         MinVersion:               tls.VersionTLS12,
+         CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+         PreferServerCipherSuites: true,
+         CipherSuites: []uint16{
+             tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+             tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+             tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+             tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+         },
+     }
+     return tlscfg
+
+}
+
 func main() {
 
     listenPtr := flag.String("l", "127.0.0.1:8080", "listen port forward -l x.x.x.x:xxxx (ip/domain:port)")
     remotePtr := flag.String("r", "127.0.0.1:9999", "forward to remote fake server -r x.x.x.x:xxxx (ip/domain:port)")
     fakeSrvPtr := flag.String("f", "0.0.0.0:8081", "listen fake server -r x.x.x.x:xxxx (ip/domain:port)")
     modePtr := flag.String("m", "none", "obfuscation mode (AES encrypted by default): websocket-client, websocket-server, http-client, http-server, none")
-    keyPtr := flag.String("k", "5fe10ae58c5ad02a6113305f4e702d07", "aes encryption secret: run with '-k `openssl passwd -1 -salt ok | md5sum`' to derive key from password without exposing to command line")
+    keyPtr := flag.String("key", "5fe10ae58c5ad02a6113305f4e702d07", "aes encryption secret: use '-k `openssl passwd -1 -salt ok | md5sum`' to derive key from password")
+    pemPtr := flag.String("pem", "default", "set path to .pem file to use for TLS endpoint (fake server) (default uses hardcoded key pair 'CN=target.com')")
 
     flag.Parse()
 
@@ -232,12 +298,16 @@ func main() {
     }
     fmt.Printf("Local Port Forward Listening: %s\n", *listenPtr)
 
+    //TLS SETUP - default self-signed key, do not use! set your own .pem!
+    tlscfg := setupTLS(*pemPtr)
+
     //SETUP LOCAL FAKESRV LISTENER
-    fakeSrv , err := net.Listen("tcp", *fakeSrvPtr)
+    fakeSrv, err := tls.Listen("tcp", *fakeSrvPtr, tlscfg)
     if err != nil {
         panic(err)
     }
-    fmt.Printf("FakeSrv Listening: %s\n", *fakeSrvPtr)
+
+    fmt.Printf("FakeSrv listening: %s, using TLS key file: %s\n", *fakeSrvPtr, *pemPtr)
 
     //PROXY LOCAL REQUESTS
     go func() {
@@ -288,14 +358,13 @@ func main() {
     go func() {
         for {
 
-            r , err := net.Dial("tcp", *remotePtr)
+            r , err := tls.Dial("tcp", *remotePtr, tlscfg)
             if err != nil {
                 time.Sleep(5 * time.Second)
                 continue
             }
 
             //OUTBOUND TRANSLATOR to REMOTE
-            //io.Copy(r, rr)
             if _ , err := io.Copy(r, rr); err == nil {
                 r.Close()
             }
