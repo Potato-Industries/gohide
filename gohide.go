@@ -86,29 +86,27 @@ func obscure_send(data []byte, stype string) string {
             get := "GET /news/api/latest HTTP/1.1\n" +
                    "Host: cdn-tbn0.gstatic.com\n" +
                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Trident/7.0; rv:11.0) like Gecko\n" +
-                   "Accept: */*\n" +
+                   "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n" +
                    "Accept-Language: en-US,en;q=0.5\n" +
-                   "Accept-Encoding: gzip, deflate, br\n" +
-                   "Referer: http://www.bbc.co.uk/\n" +
+                   "Accept-Encoding: gzip, deflate\n" +
+                   "Referer: https://www.google.com/\n" +
                    "Connection: keep-alive\n" +
+                   "Upgrade-Insecure-Requests: 1" +
                    "Cookie: Session=" + b64.StdEncoding.EncodeToString(Encrypt(data)) + "; Secure; HttpOnly\n\n"
             return string(get)
 
         case "http-server":
-            response := "HTTP/2.0 200 OK\n" +
-                        "content-encoding: gzip\n" +
-                        "content-type: text/html; charset=utf-8\n" +
-                        "pragma: no-cache\n" +
-                        "server: nginx\n" +
-                        "x-content-type-options: nosniff\n" +
-                        "x-frame-options: SAMEORIGIN\n" +
-                        "x-xss-protection: 1; mode=block\n" +
-                        "cache-control: no-cache, no-store, must-revalidate\n" +
-                        "expires: Thu, 21 Nov 2019 01:07:15 GMT\n" +
-                        "date: Thu, 21 Nov 2019 01:07:15 GMT\n" +
-                        "content-length: 30330\n" +
-                        "vary: Accept-Encoding\n" +
-                        "X-Firefox-Spdy: h2\n" +
+            response := "HTTP/1.1 200 OK\n" +
+                        "Content-Type: text/html\n" +
+                        "Transfer-Encoding: chunked\n" +
+                        "Connection: keep-alive\n" +
+                        "ETag: W/'5aa91b6d-19b00'\n" +
+                        "Cache-Control: no-cache\n" +
+                        "Access-Control-Allow-Origin: *\n" +
+                        "Server: CDN77-Turbo\n" +
+                        "X-Cache: HIT\n" +
+                        "X-Age: 21758851\n" +
+                        "Content-Encoding: gzip\n" +
                         "Set-Cookie: Session=" + b64.StdEncoding.EncodeToString(Encrypt(data)) + "; Secure; Path=/; HttpOnly\n\n"
             return string(response)
 
@@ -188,15 +186,17 @@ func sham(stype string) []byte {
                  "Upgrade-Insecure-Requests: 1\n\n"
             return []byte(o)
         case "http-server":
-            o := "HTTP/2.0 200 OK\n" +
-                 "content-encoding: gzip\n" +
-                 "content-type: text/html; charset=utf-8\n" +
-                 "pragma: no-cache\n" +
-                 "server: nginx\n" +
-                 "x-content-type-options: nosniff\n" +
-                 "x-frame-options: SAMEORIGIN\n" +
-                 "x-xss-protection: 1; mode=block\n" +
-                 "X-Firefox-Spdy: h2\n\n"
+            o := "HTTP/1.1 200 OK\n" +
+                 "Content-Type: text/html\n" +
+                 "Transfer-Encoding: chunked\n" +
+                 "Connection: keep-alive\n" +
+                 "ETag: W/'5aa91b6d-19b00'\n" +
+                 "Cache-Control: no-cache\n" +
+                 "Access-Control-Allow-Origin: *\n" +
+                 "Server: CDN77-Turbo\n" +
+                 "X-Cache: HIT\n" +
+                 "X-Age: 21758851\n" +
+                 "Content-Encoding: gzip\n\n"
             return []byte(o)
     }
 }
@@ -275,9 +275,8 @@ func main() {
             io.Copy(iw, f)
 
             if strings.HasSuffix(*modePtr, "server") {
-                f.Write(sham(*modePtr))
+                    f.Write(sham(*modePtr))
             }
-
             f.Close()
 
             time.Sleep(400 * time.Millisecond)
@@ -296,7 +295,10 @@ func main() {
             }
 
             //OUTBOUND TRANSLATOR to REMOTE
-            io.Copy(r, rr)
+            //io.Copy(r, rr)
+            if _ , err := io.Copy(r, rr); err == nil {
+                r.Close()
+            }
 
             time.Sleep(400 * time.Millisecond)
 
