@@ -13,16 +13,18 @@ AES-GCM is enabled by default for each of the options above.
 
 **Usage**
 ```
-root@WOPR-KALI:/opt/gohide# ./gohide -h
+root@WOPR-KALI:/opt/gohide-dev# ./gohide -h
 Usage of ./gohide:
   -f string
     	listen fake server -r x.x.x.x:xxxx (ip/domain:port) (default "0.0.0.0:8081")
-  -k openssl passwd -1 -salt ok | md5sum
-    	aes encryption secret: run with '-k openssl passwd -1 -salt ok | md5sum' to derive key from password without exposing to command line (default "5fe10ae58c5ad02a6113305f4e702d07")
+  -key openssl passwd -1 -salt ok | md5sum
+    	aes encryption secret: use '-k openssl passwd -1 -salt ok | md5sum' to derive key from password (default "5fe10ae58c5ad02a6113305f4e702d07")
   -l string
     	listen port forward -l x.x.x.x:xxxx (ip/domain:port) (default "127.0.0.1:8080")
   -m string
     	obfuscation mode (AES encrypted by default): websocket-client, websocket-server, http-client, http-server, none (default "none")
+  -pem string
+    	set path to .pem file to use for TLS fake server (default uses hardcoded key pair 'CN=target.com') (default "default")
   -r string
     	forward to remote fake server -r x.x.x.x:xxxx (ip/domain:port) (default "127.0.0.1:9999")
 ```
