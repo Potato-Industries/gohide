@@ -8,6 +8,7 @@ import (
     "flag"
     "time"
     "regexp"
+    "strings"
     "crypto/aes"
     "crypto/cipher"
     "crypto/rand"
@@ -156,26 +157,47 @@ func obscure_recv(data []byte, stype string) []byte {
     }
 }
 
-func sham(stype string) string {
+func sham(stype string) []byte {
     switch stype {
         default:
+            o := "{}"
+            return []byte(o)
+        case "websocket-server":
+            o := "HTTP/1.1 101 Switching Protocols\n" +
+                 "Upgrade: websocket\n" +
+                 "Connection: Upgrade\n" +
+                 "Sec-WebSocket-Accept: s3pPSMdiTxaQ8kYGzzhNRbK+x0o=\n\n"
+            return []byte(o)
+        case "websocket-client":
+            o := "GET /news/api/latest HTTP/1.1\n" +
+                 "Host: cdn-tb0.gstatic.com\n" +
+                 "User-Agent: Mozilla/5.0 (Windows NT 10.0; Trident/7.0; rv:11.0) like Gecko\n" +
+                 "Upgrade: websocket\n" +
+                 "Connection: Upgrade\n" +
+                 "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\n" +
+                 "Sec-WebSocket-Version: 13\n\n"
+            return []byte(o)
+        case "http-client":
             o := "GET / HTTP/1.1\n" +
                  "Host: cdn-tb0.gstatic.com\n" +
                  "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0\n" +
-                 "Accept: text/html,application/xhtml+xml,application/xml\n" + 
+                 "Accept: text/html,application/xhtml+xml,application/xml\n" +
                  "Accept-Language: en-US,en\n" +
                  "Accept-Encoding: gzip, deflate\n" +
-                 "Connection: close\n" +
+                 "Connection: keep-alive\n" +
                  "Upgrade-Insecure-Requests: 1\n\n"
-            return o
-        //case "websocket-server":
-        //    return []byte()
-        //case "websocket-client":
-        //    return []byte()
-        //case "http-client":
-        //    return []byte()
-        //case "http-server":
-        //    return []byte()
+            return []byte(o)
+        case "http-server":
+            o := "HTTP/2.0 200 OK\n" +
+                 "content-encoding: gzip\n" +
+                 "content-type: text/html; charset=utf-8\n" +
+                 "pragma: no-cache\n" +
+                 "server: nginx\n" +
+                 "x-content-type-options: nosniff\n" +
+                 "x-frame-options: SAMEORIGIN\n" +
+                 "x-xss-protection: 1; mode=block\n" +
+                 "X-Firefox-Spdy: h2\n\n"
+            return []byte(o)
     }
 }
 
@@ -245,9 +267,18 @@ func main() {
             if err != nil {
                 continue
             }
+            if strings.HasSuffix(*modePtr, "client") {
+                 f.Write(sham(*modePtr))
+            }
 
             //REMOTE to INBOUND TRANSLATOR
             io.Copy(iw, f)
+
+            if strings.HasSuffix(*modePtr, "server") {
+                f.Write(sham(*modePtr))
+            }
+
+            f.Close()
 
             time.Sleep(400 * time.Millisecond)
 
