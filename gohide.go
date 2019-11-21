@@ -118,7 +118,7 @@ func obscure_send(data []byte, stype string) string {
 }
 
 func finder(pattern string, data []byte) []byte {
-   found, _ := regexp.Match(pattern, data)
+    found, _ := regexp.Match(pattern, data)
             if found == true {
                 re := regexp.MustCompile(pattern)
                 match := re.FindStringSubmatch(string(data))
@@ -153,6 +153,29 @@ func obscure_recv(data []byte, stype string) []byte {
 	    pattern := `(?m)Session=([^;]+);`
             return finder(pattern, data)
 
+    }
+}
+
+func sham(stype string) string {
+    switch stype {
+        default:
+            o := "GET / HTTP/1.1\n" +
+                 "Host: cdn-tb0.gstatic.com\n" +
+                 "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0\n" +
+                 "Accept: text/html,application/xhtml+xml,application/xml\n" + 
+                 "Accept-Language: en-US,en\n" +
+                 "Accept-Encoding: gzip, deflate\n" +
+                 "Connection: close\n" +
+                 "Upgrade-Insecure-Requests: 1\n\n"
+            return o
+        //case "websocket-server":
+        //    return []byte()
+        //case "websocket-client":
+        //    return []byte()
+        //case "http-client":
+        //    return []byte()
+        //case "http-server":
+        //    return []byte()
     }
 }
 
@@ -224,7 +247,7 @@ func main() {
             }
 
             //REMOTE to INBOUND TRANSLATOR
-            go io.Copy(iw, f)
+            io.Copy(iw, f)
 
             time.Sleep(400 * time.Millisecond)
 
@@ -237,11 +260,12 @@ func main() {
 
             r , err := net.Dial("tcp", *remotePtr)
             if err != nil {
+                time.Sleep(5 * time.Second)
                 continue
             }
 
             //OUTBOUND TRANSLATOR to REMOTE
-            go io.Copy(r, rr)
+            io.Copy(r, rr)
 
             time.Sleep(400 * time.Millisecond)
 
