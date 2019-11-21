@@ -122,5 +122,8 @@ none
 ```
 8JWxXufVora2FNa/8m2Vnub6oiA2raV4Q5tUELJA
 ```
+Future
+- Fix up error handling.
+- Add TLS.
 
 Enjoy~
