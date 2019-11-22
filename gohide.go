@@ -407,7 +407,7 @@ func main() {
         for {
             scanner := bufio.NewScanner(or)
 	    for scanner.Scan() {
-                fmt.Fprintf(rw, obscure_send([]byte(scanner.Text()), *modePtr))
+                fmt.Fprintf(rw, obscure_send(scanner.Bytes(), *modePtr))
 	    }
 
             time.Sleep(400 * time.Millisecond)
@@ -421,7 +421,7 @@ func main() {
 
             scanner := bufio.NewScanner(ir)
             for scanner.Scan() {
-                output := obscure_recv([]byte(scanner.Text()), *modePtr)
+                output := obscure_recv(scanner.Bytes(), *modePtr)
                 if output != nil {
                     fmt.Fprintf(lw, string(output) + "\n")
                 }
