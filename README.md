@@ -24,9 +24,10 @@ Usage of ./gohide:
   -m string
     	obfuscation mode (AES encrypted by default): websocket-client, websocket-server, http-client, http-server, none (default "none")
   -pem string
-    	set path to .pem file to use for TLS fake server (default uses hardcoded key pair 'CN=target.com') (default "default")
+    	path to .pem for TLS encryption mode: default = use hardcoded key pair 'CN:target.com', none = plaintext mode (default "default")
   -r string
     	forward to remote fake server -r x.x.x.x:xxxx (ip/domain:port) (default "127.0.0.1:9999")
+
 ```
 
 **Scenario** 
@@ -135,7 +136,6 @@ none
 
 Future
 - Fix up error handling.
-- Add flag/logic to disable tls.
 
 
 
